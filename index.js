@@ -18,10 +18,15 @@ class LLamaTranslate {
         return htmlfiles;
     }
 
-    concatRegexp(reg, exp) {
-        let flags = reg.flags + exp.flags;
-        flags = Array.from(new Set(flags.split(''))).join();
-        return new RegExp(reg.source + exp.source, flags);
+    _matchAll(pattern, data, ignoredWords) {
+        const matchedAll = data.matchAll(pattern);
+        let matchedAllArr = Array.from(matchedAll)
+
+        ignoredWords.forEach(ignoredWord => {
+            matchedAllArr = matchedAllArr.filter((value) => value != ignoredWord);
+        });
+
+        return matchedAllArr;
     }
 
     async translator(file) {
@@ -30,29 +35,21 @@ class LLamaTranslate {
         console.log('Translating: ', file)
 
         let keepWorking = true;
-        const startPattern = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+/m;
+        const pattern = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+/g;
         let ignoredWords = [];
 
         while (keepWorking) {
-            let pattern = startPattern;
-
-            ignoredWords.forEach(ignoredWord => {
-                pattern = this.concatRegexp(RegExp('(?!' + ignoredWord + ')'), pattern);
-            });
-
-            pattern = this.concatRegexp(RegExp('^'), pattern);
-
-            const match = data.match(pattern);
-
-            const answer = await this._translate(match[0]);
+            const matchedAllArr = this._matchAll(pattern, data, ignoredWords);
+            
+            const answer = await this._translate(matchedAllArr[0][0]);
 
             if (!answer.translated) {
                 ignoredWords.push(answer.content);
             }
 
-            data = data.replaceAll(match[0], answer.content);
+            data = data.replaceAll(matchedAllArr[0][0], answer.content);
 
-            if (!match.length) {
+            if (!matchedAllArr[0][0].length) {
                 keepWorking = false;
             }
         }
