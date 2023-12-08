@@ -81,6 +81,9 @@ class LLamaTranslate {
 
         if (!a1.length) {
             a1 = q;
+        }
+
+        if (a1 === q) {
             isTranslated = false;
         }
 
