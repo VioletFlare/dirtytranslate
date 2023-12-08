@@ -18,20 +18,39 @@ class LLamaTranslate {
         return htmlfiles;
     }
 
+    concatRegexp(reg, exp) {
+        let flags = reg.flags + exp.flags;
+        flags = Array.from(new Set(flags.split(''))).join();
+        return new RegExp(reg.source + exp.source, flags);
+    }
+
     async translator(file) {
         let data = fs.readFileSync(file, { encoding: 'utf8', flag: 'r' });
 
         console.log('Translating: ', file)
 
         let keepWorking = true;
-        const pattern = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+/m;
+        const startPattern = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]+/m;
+        let ignoredWords = [];
 
         while (keepWorking) {
+            let pattern = startPattern;
+
+            ignoredWords.forEach(ignoredWord => {
+                pattern = this.concatRegexp(RegExp('(?!' + ignoredWord + ')'), startPattern);
+            });
+
+            this.concatRegexp(RegExp('^'), pattern);
+
             const match = data.match(pattern);
 
-            const translated = await this._translate(match[0]);
+            const answer = await this._translate(match[0]);
 
-            data = data.replaceAll(match[0], translated);
+            if (!answer.translated) {
+                ignoredWords.push(answer.content);
+            }
+
+            data = data.replaceAll(match[0], answer.content);
 
             if (!match.length) {
                 keepWorking = false;
@@ -57,18 +76,25 @@ class LLamaTranslate {
 
         const context = new LlamaContext({model});
         const session = new LlamaChatSession({context});
+        let isTranslated = true;
 
         let a1 = await session.prompt(q1);
 
         a1 = a1.replaceAll('Please translate the following text to english:', '');
 
-        console.log("AI: " + a1);
-
         if (!a1.length) {
-            a1 = q1;
+            a1 = q;
+            isTranslated = false;
         }
 
-        return a1;
+        const answer = {
+            content: a1,
+            translated: isTranslated
+        }
+
+        console.log("AI: " + a1);
+
+        return answer;
     }
 
     async run() {
