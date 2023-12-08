@@ -40,17 +40,17 @@ class LLamaTranslate {
 
         while (keepWorking) {
             const matchedAllArr = this._matchAll(pattern, data, ignoredWords);
-            
-            const answer = await this._translate(matchedAllArr[0][0]);
 
-            if (!answer.translated) {
-                ignoredWords.push(answer.content);
-            }
+            if (matchedAllArr.length) {
+                const answer = await this._translate(matchedAllArr[0][0]);
 
-            data = data.replaceAll(matchedAllArr[0][0], answer.content);
-
-            if (!matchedAllArr[0][0].length) {
-                keepWorking = false;
+                if (!answer.translated) {
+                    ignoredWords.push(answer.content);
+                }
+    
+                data = data.replace(matchedAllArr[0][0], answer.content);
+            } else {
+                keepWorking = false; 
             }
         }
 
