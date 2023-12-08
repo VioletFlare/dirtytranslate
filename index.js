@@ -37,10 +37,10 @@ class LLamaTranslate {
             let pattern = startPattern;
 
             ignoredWords.forEach(ignoredWord => {
-                pattern = this.concatRegexp(RegExp('(?!' + ignoredWord + ')'), startPattern);
+                pattern = this.concatRegexp(RegExp('(?!' + ignoredWord + ')'), pattern);
             });
 
-            this.concatRegexp(RegExp('^'), pattern);
+            pattern = this.concatRegexp(RegExp('^'), pattern);
 
             const match = data.match(pattern);
 
@@ -80,7 +80,7 @@ class LLamaTranslate {
 
         let a1 = await session.prompt(q1);
 
-        a1 = a1.replaceAll('Please translate the following text to english:', '');
+        a1 = a1.replaceAll('Please translate the following text to english: ', '');
 
         if (!a1.length) {
             a1 = q;
