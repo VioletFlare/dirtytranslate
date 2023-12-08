@@ -58,7 +58,10 @@ class LLamaTranslate {
         const context = new LlamaContext({model});
         const session = new LlamaChatSession({context});
 
-        const a1 = await session.prompt(q1);
+        let a1 = await session.prompt(q1);
+
+        a1 = a1.replaceAll('Please translate the following text to english:', '');
+
         console.log("AI: " + a1);
 
         if (!a1.length) {
