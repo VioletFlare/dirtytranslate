@@ -3,7 +3,7 @@ import path from "path";
 import {LlamaModel, LlamaContext, LlamaChatSession} from "node-llama-cpp";
 import fs from "fs";
 import { glob } from "glob";
-import Queue from 'better-queue';
+import Queue from 'queue';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,10 +12,14 @@ const model = new LlamaModel({
 });
 
 class LLamaTranslate {
-    async _getFilesToTranslate() {
-        const htmlfiles = await glob('{./input/**/*.html,./input/**/*.js}', { ignore: 'node_modules/**' });
+    _getFilesToTranslate() {
+        const promised = new Promise(async (resolve) => {
+            const htmlfiles = await glob('{./input/**/*.html,./input/**/*.js}', { ignore: 'node_modules/**' });
+            resolve(htmlfiles);
+        })
+        
 
-        return htmlfiles;
+        return promised;
     }
 
     _matchAll(pattern, data, ignoredWords) {
@@ -57,14 +61,17 @@ class LLamaTranslate {
         fs.writeFileSync(file, data);
     }
 
-    async _findAndReplace() {
-        const files = await this._getFilesToTranslate();
+    _findAndReplace() {
+        var q = new Queue({ concurrency: 1, autostart: true });
 
-        var q = new Queue((file) => this.translator(file), { concurrent: 1 });
-
-        files.forEach((file) => {
-            q.push(file);
-        })
+        this._getFilesToTranslate().then((files) => {
+            files.forEach((file) => {
+                q.push(async (cb) => { 
+                    await this.translator(file);
+                    cb();
+                });
+            });
+        });
     }
 
     async _translate(q) {
@@ -97,8 +104,8 @@ class LLamaTranslate {
         return answer;
     }
 
-    async run() {
-        await this._findAndReplace();
+    run() {
+        this._findAndReplace();
     }
 
 }
