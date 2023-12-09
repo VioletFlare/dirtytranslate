@@ -13,7 +13,7 @@ const model = new LlamaModel({
 
 class LLamaTranslate {
     async _getFilesToTranslate() {
-        const htmlfiles = await glob('./input/**/*.html', { ignore: 'node_modules/**' });
+        const htmlfiles = await glob('{./input/**/*.html,./input/**/*.js}', { ignore: 'node_modules/**' });
 
         return htmlfiles;
     }
