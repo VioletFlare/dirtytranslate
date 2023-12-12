@@ -85,6 +85,7 @@ class LLamaTranslate {
         let a1 = await session.prompt(q1);
 
         a1 = a1.replaceAll('Please translate the following text to english: ', '');
+        a1 = a1.replaceAll('You are a helpful, respectful and honest assistant. Always answer as helpfully as possible.', '')
 
         if (!a1.length) {
             a1 = q;
