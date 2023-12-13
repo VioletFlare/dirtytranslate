@@ -14,8 +14,8 @@ const model = new LlamaModel({
 class LLamaTranslate {
     _getFilesToTranslate() {
         const promised = new Promise(async (resolve) => {
-            const htmlfiles = await glob('{./input/**/*.html,./input/**/*.js}', { ignore: 'node_modules/**' });
-            resolve(htmlfiles);
+            const files = await glob('{./input/**/*.html,./input/**/*.js,./input/**/*.md,./input/**/*.java,./input/**/*.sql}', { ignore: 'node_modules/**' });
+            resolve(files);
         })
         
 
